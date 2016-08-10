@@ -5,6 +5,7 @@ from pytg.utils import coroutine
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 from asyncio import Lock
+from collections import deque
 import re
 
 def main():
@@ -18,7 +19,7 @@ def main():
 	receiver.start()  # note that the Sender has no need for a start function.
 
 	order_poll = []
-	fight_poll = {}
+	fight_poll = deque([] for _ in range(0, 60))
 
 	fight_codes = ["/f_IB941641", "/f_IA42478", "/f_I3269", "/f_I405985", "/f_I3C237", "/f_I8741134", "/f_I3C8593"]
 	for code in fight_codes:
@@ -54,8 +55,9 @@ def main():
 
 def fight(sender, order_poll, fight_poll):
 	now = datetime.now().minute
-	if now not in fight_poll:
-		return
+	if now == 0:
+		fight_poll.rotate(1)
+		return # Don't attack on minute 0 to prevent repeated attacks
 
 	for code in fight_poll[now]:
 		order_poll.append(code)
@@ -123,14 +125,11 @@ def place_order(order, order_poll):
 	print()
 
 def fight_order(code, fight_poll):
+	# Insert code into the next iteration of fight()
 	now = (datetime.now().minute + 1) % 60
-	if now not in fight_poll:
-		fight_poll[now] = []
-
-	for _, codes in fight_poll.items():
-		for g_code in codes:
-			if g_code == code:
-				return
+	for codes in fight_poll:
+		if code in codes:
+			return
 
 	print("Inserting fight code (" + code + ") on fight list\n")
 	fight_poll[now].append(code)
@@ -163,6 +162,8 @@ def received_success(sender, msg, order_poll, fight_poll):
 
 		fight_order(code, fight_poll)
 		place_order("/cure", order_poll)
+		# This message does not mean our order was completed
+		# So we return to prevent it from being removed from order_poll
 		return True
 
 	last_order = None
