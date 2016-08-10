@@ -171,7 +171,7 @@ def received_success(sender, msg, order_poll, fight_poll):
 		print("Removing sent order: " + last_order)
 
 	if any([p in msg for p in ["hospital", "suffered"]]):
-		if "hospital" in msg and last_order != "/cure":
+		if "hospital" in msg and last_order is not None and last_order != "/cure":
 			print("Attack failed, insuficient health. Trying again.")
 			order_poll.insert(0, last_order)
 		place_order("/cure", order_poll)
@@ -180,7 +180,7 @@ def received_success(sender, msg, order_poll, fight_poll):
 		print("Attack failed. Gang is in fight, try again.")
 		place_order(last_order, order_poll)
 
-	if "/levelup" in msg:
+	if "/levelup" in msg and "/levelup" not in order_poll:
 		print("You leveled up. Clearing queue from cure orders.")
 		while "/cure" in order_poll:
 			order_poll.remove("/cure")
