@@ -185,6 +185,7 @@ def received_success(sender, msg, order_poll, fight_poll):
 		print("You leveled up. Clearing queue from cure orders.")
 		while "/cure" in order_poll:
 			order_poll.remove("/cure")
+		order_poll.insert(0, "/mission_29")
 		place_order("Energy (+1)", order_poll)
 		place_order("/levelup", order_poll)
 		place_order("do nothing", order_poll)
@@ -192,8 +193,8 @@ def received_success(sender, msg, order_poll, fight_poll):
 	if "choice" in msg:
 		place_order("Energy (+1)", order_poll)
 
-	if "Level up" in msg:
-		place_order("/mission_28", order_poll)
+	if "Energy restored" in msg and "/mission_29" not in order_poll:
+		place_order("/mission_29", order_poll)
 
 	if "collected" in msg:
 		spend_order(msg, order_poll)
